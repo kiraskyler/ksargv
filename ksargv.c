@@ -48,10 +48,12 @@ int ksargv_parse_argv_get_elem_index(char* args, s_ksargv_elems_status* status, 
 {
     if(args == NULL)
         return -1;
+
     for(int j = 0; j < elems_count; j++)
     {
         if(status[j].select == true)
             continue;
+
         for(int option_index = 0; elems[j].option[option_index] != NULL; option_index++)
         {
             /* option select */
@@ -90,12 +92,15 @@ double ksargv_parse_argv_get_double(char* mess, bool* res)
 bool ksargv_parse_argv_get_bool(char* mess, bool* res)
 {
     *res = true;
-    if(strcmp(mess, "false") == 0)
+    if (mess == NULL)
+        return true;
+    if(strcmp(mess, "false") == 0 || strcmp(mess, "False") == 0)
         return false;
-    else if(strcmp(mess, "true") == 0)
+    else if(strcmp(mess, "true") == 0 || strcmp(mess, "True") == 0)
         return true;
     else
         *res = false;
+    
     return false;
 }
 
@@ -154,20 +159,23 @@ int ksargv_parse_argv(char** argv, s_ksargv_elems* elems, unsigned int elems_cou
 {
     if(argv[0] == NULL || argv[1] == NULL || elems_count == 0)
         return 0;
+    
     s_ksargv_elems_status* status = KSARGV_MALLOC(sizeof(s_ksargv_elems_status) * elems_count);
     if(status == NULL)
     {
         errno = ENOMEM;
         return -1;
     }
+    
     memset(status, 0, sizeof(s_ksargv_elems_status) * elems_count);
-    for(int i = 1; argv[i] != NULL; i++)
+    for(int argv_index = 1; argv[argv_index] != NULL; argv_index++)
     {
         int elem_index;
-        if((elem_index = ksargv_parse_argv_get_elem_index(argv[i], status, elems, elems_count)) >= 0)
+        if((elem_index = ksargv_parse_argv_get_elem_index(argv[argv_index], status, elems, elems_count)) >= 0)
         {
             status[elem_index].select = true;
             int args_count = ksargv_parse_argv_get_elem_argv_count(elems[elem_index].args);
+            
             if(args_count == 0)              /* this option do not need args */
                 elems[elem_index].function(elems[elem_index].args, NULL, 0, ARGV_ERRO_NONE);
             else
@@ -180,51 +188,94 @@ int ksargv_parse_argv(char** argv, s_ksargv_elems* elems, unsigned int elems_cou
                     errno = ENOMEM;
                     goto fall;
                 }
+                
                 /* loop, convert argv */
                 for(int arg_index = 0; arg_index < args_count; arg_index++)
                 {
-                    if(argv[i + 1] == NULL)
+                    if(elems[elem_index].args[arg_index] != ARGV_BOOL && argv[argv_index + 1] == NULL)  // bool类型后面不跟，表示true
                     {
                         KSARGV_FREE(values);
                         elems[elem_index].function(elems[elem_index].args, NULL, 0, ARGV_ERRO_LESS_ARGS);
                         errno = ERESTART;
                         goto fall;
                     }
+                    
                     bool res = true;
                     values[arg_index].type = elems[elem_index].args[arg_index];
                     switch(elems[elem_index].args[arg_index])
                     {
                         case ARGV_STRING:
-                            values[arg_index].value.str = argv[++i];
+                            values[arg_index].value.str = argv[++argv_index];
                             break;
+
                         case ARGV_INT:
-                            values[arg_index].value.num_i = ksargv_parse_argv_get_int(argv[++i], &res);
+                            values[arg_index].value.num_i = ksargv_parse_argv_get_int(argv[++argv_index], &res);
                             break;
+
                         case ARGV_BOOL:
-                            values[arg_index].value.num_b = ksargv_parse_argv_get_bool(argv[++i], &res);
+                            values[arg_index].value.num_b = ksargv_parse_argv_get_bool(argv[++argv_index], &res);
                             break;
+
                         case ARGV_DOUBLE:
-                            values[arg_index].value.num_d = ksargv_parse_argv_get_double(argv[++i], &res);
+                            values[arg_index].value.num_d = ksargv_parse_argv_get_double(argv[++argv_index], &res);
                             break;
+
                         default:
                             break;
                     }
+
                     if(res == false)
                     {
                         KSARGV_FREE(values);
-                        elems[elem_index].function(elems[elem_index].args, NULL, 0, ARGV_ERRO_LESS_ARGS);
+                        elems[elem_index].function(elems[elem_index].args, NULL, 0, ARGV_ERRO_PARSE);
                         errno = ERESTART;
                         goto fall;
                     }
                 }
+
                 /* done, send */
-                elems[elem_index].function(elems[elem_index].args, values, args_count, ARGV_ERRO_NONE);
+                switch (elems[elem_index].parse_tpye)
+                {
+                case ATGV_PARSE_FUNC:
+                    elems[elem_index].function(elems[elem_index].args, values, args_count, ARGV_ERRO_NONE);
+                    break;
+
+                 case ATGV_PARSE_VALS:
+                    for (int val_index = 0; val_index < args_count; val_index++)
+                        switch(elems[elem_index].args[val_index])
+                        {
+                            case ARGV_STRING:
+                                sprintf(elems[elem_index].vals[val_index], values[val_index].value.str);
+                                break;
+
+                            case ARGV_INT:
+                                *(int* )elems[elem_index].vals[val_index] = values[val_index].value.num_i;
+                                break;
+
+                            case ARGV_BOOL:
+                                *(bool* )elems[elem_index].vals[val_index] = values[val_index].value.num_b;
+                                break;
+
+                            case ARGV_DOUBLE:
+                                *(double* )elems[elem_index].vals[val_index] = values[val_index].value.num_d;
+                                break;
+
+                            default:
+                                break;
+                        }
+                        
+                    break;
+                
+                default:
+                    break;
+                }
                 KSARGV_FREE(values);
             }
         }
     }
     KSARGV_FREE(status);
     return 0;
+
 fall:
     KSARGV_FREE(status);
     return -1;

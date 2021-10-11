@@ -27,6 +27,7 @@ typedef enum
 {
     ARGV_ERRO_NONE,                 // not erro
     ARGV_ERRO_LESS_ARGS,            // less args in cmd
+    ARGV_ERRO_PARSE,
     ARGV_ERRO,                      // some erro can not describe easy
 } e_argv_erro;
 
@@ -38,6 +39,13 @@ typedef enum
     ARGV_DOUBLE,                    // double
     ARGV_END,                       // must pust it in end <e_argv_type> array end
 } e_argv_type;
+
+typedef enum
+{
+    ATGV_PARSE_FUNC,                // parse result in function
+    ATGV_PARSE_VALS,                // parse result in vals
+    ATGV_PARSE_NULL,
+} e_argv_parse_type;
 
 typedef struct s_ksargv_value
 {
@@ -70,6 +78,9 @@ typedef struct
 {
     char**              option;
     e_argv_type*        args;
+
+    e_argv_parse_type   parse_tpye;
+    void**              vals;
     f_ksargv_function   function;
 } s_ksargv_elems;
 

@@ -1,55 +1,43 @@
-#include "template.h"
-
 #include <stdio.h>
 
 #include "ksargv.h"
 
 void template_version(e_argv_type* argv,  s_ksargv_value* values, unsigned int values_count, e_argv_erro erro);
-char* version_option[] = {"-v", "-version", NULL};
-e_argv_type version_type[] = {ARGV_STRING, ARGV_END};
-
 void template_ip_port(e_argv_type* argv,  s_ksargv_value* values, unsigned int values_count, e_argv_erro erro);
-char* ip_port_option[] = {"-ip", NULL};
-e_argv_type ip_port_type[] = {ARGV_STRING, ARGV_INT, ARGV_END};
-
 void template_am_i_great(e_argv_type* argv,  s_ksargv_value* values, unsigned int values_count, e_argv_erro erro);
-char* am_i_great_option[] = {"-g", "-great", NULL};
-e_argv_type am_i_great_type[] = {ARGV_BOOL, ARGV_END};
-
 void template_score(e_argv_type* argv,  s_ksargv_value* values, unsigned int values_count, e_argv_erro erro);
-char* score_option[] = {"-s", "-score", NULL};
-e_argv_type score_type[] = {ARGV_DOUBLE, ARGV_END};
-
 void template_keep(e_argv_type* argv,  s_ksargv_value* values, unsigned int values_count, e_argv_erro erro);
-char* keep_option[] = {"-k", "-keep", NULL};
-e_argv_type keep_type[] = {ARGV_END};
-
 
 s_ksargv_elems argv_options[] =
 {
     {
-        .option = version_option,
-        .args = version_type,
+        .option = (char* []){"-v", "-version", NULL},
+        .args = (e_argv_type []){ARGV_STRING, ARGV_END},
+        .parse_tpye = ATGV_PARSE_FUNC,
         .function = template_version,
     },
     {
-        .option = ip_port_option,
-        .args = ip_port_type,
+        .option = (char* []){"-ip", NULL},
+        .args = (e_argv_type []){ARGV_STRING, ARGV_INT, ARGV_END},
+        .parse_tpye = ATGV_PARSE_FUNC,
         .function = template_ip_port,
     },
     {
-        .option = am_i_great_option,
-        .args = am_i_great_type,
+        .option = (char* []){"-g", "-great", NULL},
+        .args = (e_argv_type []){ARGV_BOOL, ARGV_END},
+        .parse_tpye = ATGV_PARSE_FUNC,
         .function = template_am_i_great,
     },
     {
-        .option = score_option,
-        .args = score_type,
+        .option = (char* []){"-s", "-score", NULL},
+        .args = (e_argv_type []){ARGV_DOUBLE, ARGV_END},
+        .parse_tpye = ATGV_PARSE_FUNC,
         .function = template_score,
     },
     {
-        .option = keep_option,
-        .args = keep_type,
+        .option = (char* []){"-k", "-keep", NULL},
+        .args = (e_argv_type []){ARGV_END},
+        .parse_tpye = ATGV_PARSE_FUNC,
         .function = template_keep,
     },
 };

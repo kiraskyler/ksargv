@@ -9,6 +9,7 @@ V0.0.3.20210623
 > 解析 c语言中的 argv参数
 >
 > 示例：./template -version -sfa -ip 192.168.131 886 -g true -s 
+> 示例：./template_vals --host 127.0.0.1 8899 -s
 
 ## 文件目录
 
