@@ -92,6 +92,7 @@ double ksargv_parse_argv_get_double(char* mess, bool* res)
 bool ksargv_parse_argv_get_bool(char* mess, bool* res)
 {
     *res = true;
+    
     if (mess == NULL)
         return true;
     if(strcmp(mess, "false") == 0 || strcmp(mess, "False") == 0)
@@ -99,9 +100,7 @@ bool ksargv_parse_argv_get_bool(char* mess, bool* res)
     else if(strcmp(mess, "true") == 0 || strcmp(mess, "True") == 0)
         return true;
     else
-        *res = false;
-    
-    return false;
+        return false;
 }
 
 #if 0
@@ -213,7 +212,10 @@ int ksargv_parse_argv(char** argv, s_ksargv_elems* elems, unsigned int elems_cou
                             break;
 
                         case ARGV_BOOL:
-                            values[arg_index].value.num_b = ksargv_parse_argv_get_bool(argv[++argv_index], &res);
+                            if (argv[argv_index + 1] == NULL || argv[argv_index + 1][0] == '-')             // bool 后面可以不跟参数表示True
+                                values[arg_index].value.num_b = ksargv_parse_argv_get_bool(NULL, &res);
+                            else
+                                values[arg_index].value.num_b = ksargv_parse_argv_get_bool(argv[++argv_index], &res);
                             break;
 
                         case ARGV_DOUBLE:

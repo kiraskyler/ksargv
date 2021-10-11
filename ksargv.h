@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include "config.h"
+
 // #define DBG_PRINTF                          (1)
 // #define DBG_MALLOC                          (1)
 
@@ -15,12 +17,6 @@
     #define KSARGV_MALLOC(size)             malloc(size)
     #define KSARGV_REALLOC(mem, size)       realloc(mem, size)
     #define KSARGV_FREE(mem)                free(mem)
-#endif
-
-#ifdef      DBG_PRINTF
-    #define     dbg_printf(fmt, args...)             (printf("\t%s,\t%s,%d >> "fmt"\n", __FILE__, __FUNCTION__, __LINE__, ##args))
-#else
-    #define     dbg_printf(fmt, arg...)              // nothing
 #endif
 
 typedef enum
