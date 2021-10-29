@@ -9,11 +9,20 @@ typedef struct
     bool select;            // is elem select
 } s_ksargv_elems_status;
 
-#if 0
-    static s_ksargv_value* cache_values;
-    static unsigned int cache_value_count = 0;
-    static unsigned int cache_value_size = 0;
-#endif
+typedef struct
+{
+    s_values* next;/* data */
+    char* val;
+}s_values;
+
+typedef struct
+{
+    s_options* next;
+    s_options* back;
+    s_values* values;
+
+    char*   argv;
+}s_options;
 
 /*********************************** dbg malloc *******************************************/
 static int dbg_malloc_time = 0;
@@ -44,7 +53,7 @@ void dbg_print_mem(void)
 }
 
 /*************************************** parse slow **************************************************/
-int ksargv_parse_argv_get_elem_index(char* args, s_ksargv_elems_status* status, s_ksargv_elems* elems, unsigned int elems_count)
+int argv_get_elem_index(char* args, s_ksargv_elems_status* status, s_ksargv_elems* elems, unsigned int elems_count)
 {
     if(args == NULL)
         return -1;
@@ -72,7 +81,7 @@ int ksargv_parse_argv_get_elem_argv_count(e_argv_type* args)
     return res;
 }
 
-int ksargv_parse_argv_get_int(char* mess, bool* res)
+int argv_get_int(char* mess, bool* res)
 {
     int a = atoi(mess);
     if(a == 0 && mess[0] != '0')
@@ -80,7 +89,7 @@ int ksargv_parse_argv_get_int(char* mess, bool* res)
     return a;
 }
 
-double ksargv_parse_argv_get_double(char* mess, bool* res)
+double argv_get_double(char* mess, bool* res)
 {
     char* endpoint;
     double num = strtod(mess, &endpoint);
@@ -89,7 +98,7 @@ double ksargv_parse_argv_get_double(char* mess, bool* res)
     return num;
 }
 
-bool ksargv_parse_argv_get_bool(char* mess, bool* res)
+bool argv_get_bool(char* mess, bool* res)
 {
     *res = true;
     
@@ -103,58 +112,55 @@ bool ksargv_parse_argv_get_bool(char* mess, bool* res)
         return false;
 }
 
-#if 0
-/*  */
-int ksargv_value_cache_pull(s_ksargv_value* value)
+s_options* argc_get_options(char** argv)
 {
-    if(cache_value_size == 0)
+    s_options* opts = NULL;
+    s_values* val = NULL;
+
+    unsigned int i = 0;
+
+    while (argv[i++] != NULL)
     {
-        cache_values = KSARGV_MALLOC(sizeof(s_ksargv_value) * 20);
-        if(cache_values == NULL)
+        if (argv[i][0] == '-')
         {
-            errno = ENOMEM;
-            return -1;
+            /** new opts */
+            if (opts == NULL)
+                opts = KSARGV_MALLOC(sizeof(s_options));
+            else
+            {
+                s_options* opt_buff = KSARGV_MALLOC(sizeof(s_options));
+                opts->next = opt_buff;
+                opts = opt_buff;
+            }
+
+            KSARGV_LOG_DEBUG("new options: %s", argv[i]);
+            opts->values = NULL;
+            opts->argv = argv[i];
+            val = NULL;
         }
-        cache_value_size = 20;
-    }
-    if(cache_value_count == cache_value_size)
-    {
-        s_ksargv_value* cache_values_buff = KSARGV_REALLOC(cache_values, sizeof(s_ksargv_value) * cache_value_size * 2);
-        if(cache_values_buff == NULL)
+        else
         {
-            errno = ENOMEM;
-            return -1;
+            if (val == NULL)
+            {
+                opts->values = KSARGV_MALLOC(sizeof(s_options));
+                val = opts->values;
+
+            }
+            else
+            {
+               s_values* val_buff = KSARGV_MALLOC(sizeof(s_options));
+               val->next = val_buff;
+               val = val_buff;
+            }
+            
+            KSARGV_LOG_DEBUG("new values: %s:%s", opts->argv, argv[i]);
+            val->next = NULL;
+            val->val = argv[i];
         }
-        cache_values = cache_values_buff;
-        cache_value_size = cache_value_size * 2;
     }
-    if(cache_value_count < cache_value_size)
-    {
-        memcpy(&cache_values[cache_value_count], value, sizeof(s_ksargv_value));
-        cache_value_count++;
-        return cache_value_count - 1;
-    }
-    return -1;
 }
 
-s_ksargv_value* ksargv_value_cache_pop(int index)
-{
-    if(index < cache_value_count)
-        return &cache_values[index];
-    else
-        return NULL;
-}
-
-void ksargv_value_cache_clean(void)
-{
-    KSARGV_FREE(cache_values);
-    cache_value_count = 0;
-    cache_value_size = 0;
-}
-
-#endif
-
-int ksargv_parse_argv(char** argv, s_ksargv_elems* elems, unsigned int elems_count)
+int ksargv_parse_argv(char** argv, s_ksargv_elems* elems, size_t elems_count)
 {
     if(argv[0] == NULL || argv[1] == NULL || elems_count == 0)
         return 0;
@@ -165,12 +171,24 @@ int ksargv_parse_argv(char** argv, s_ksargv_elems* elems, unsigned int elems_cou
         errno = ENOMEM;
         return -1;
     }
+
+    s_options* opts = argc_get_options(argv[1]);
+
+    if (opts == NULL)
+        return -1;
+
+    while (opts != NULL)
+    {
+        
+        
+        s_options* opts_buff = opts->next;
+        KSARGV_FREE(opts);
+        opts = opts_buff;
+    }
     
-    memset(status, 0, sizeof(s_ksargv_elems_status) * elems_count);
-    for(int argv_index = 1; argv[argv_index] != NULL; argv_index++)
     {
         int elem_index;
-        if((elem_index = ksargv_parse_argv_get_elem_index(argv[argv_index], status, elems, elems_count)) >= 0)
+        if((elem_index = argv_get_elem_index(argv[argv_index], status, elems, elems_count)) >= 0)
         {
             status[elem_index].select = true;
             int args_count = ksargv_parse_argv_get_elem_argv_count(elems[elem_index].args);
@@ -208,18 +226,18 @@ int ksargv_parse_argv(char** argv, s_ksargv_elems* elems, unsigned int elems_cou
                             break;
 
                         case ARGV_INT:
-                            values[arg_index].value.num_i = ksargv_parse_argv_get_int(argv[++argv_index], &res);
+                            values[arg_index].value.num_i = argv_get_int(argv[++argv_index], &res);
                             break;
 
                         case ARGV_BOOL:
                             if (argv[argv_index + 1] == NULL || argv[argv_index + 1][0] == '-')             // bool 后面可以不跟参数表示True
-                                values[arg_index].value.num_b = ksargv_parse_argv_get_bool(NULL, &res);
+                                values[arg_index].value.num_b = argv_get_bool(NULL, &res);
                             else
-                                values[arg_index].value.num_b = ksargv_parse_argv_get_bool(argv[++argv_index], &res);
+                                values[arg_index].value.num_b = argv_get_bool(argv[++argv_index], &res);
                             break;
 
                         case ARGV_DOUBLE:
-                            values[arg_index].value.num_d = ksargv_parse_argv_get_double(argv[++argv_index], &res);
+                            values[arg_index].value.num_d = argv_get_double(argv[++argv_index], &res);
                             break;
 
                         default:

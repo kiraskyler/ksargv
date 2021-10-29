@@ -4,9 +4,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "config.h"
-
-// #define DBG_PRINTF                          (1)
+#define KSARGV_LOG_DEBUG(fmt, args...)          (printf("\t%s,\t%s,%d >> "fmt"\n", __FILE__, __FUNCTION__, __LINE__, ##args))
+#define KSARGV_LOG_ERRO(fmt, args...)           (printf("\t%s,\t%s,%d >> "fmt"\n", __FILE__, __FUNCTION__, __LINE__, ##args))   
 // #define DBG_MALLOC                          (1)
 
 #ifdef DBG_MALLOC
@@ -96,6 +95,6 @@ extern void dbg_print_mem(void);
  * elems is array, you have to package your cmd orignaztion
  * elems_count discribe the elems array elements count
 */
-extern int ksargv_parse_argv(char** argv, s_ksargv_elems* elems, unsigned int elems_count);
+extern int ksargv_parse_argv(char** argv, s_ksargv_elems* elems, size_t elems_count);
 
 #endif
