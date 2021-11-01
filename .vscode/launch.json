@@ -5,11 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "gcc - 生成和调试活动文件",
+            "name": "template_vals",
             "type": "cppdbg",
             "request": "launch",
             "program": "${fileDirname}/template_vals",
-            "args": ["--host", "127.0.0.1", "8899", "-s"],
+            "args": ["--host", "127.0.0.1", "-s"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],

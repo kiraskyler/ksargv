@@ -11,7 +11,7 @@ void argv_erro(e_argv_type* argv, s_ksargv_value* values, unsigned int values_co
 int main(int argc, char* argv[])
 {
     char host[] = "unknown";
-    int port = 0;
+    int port = 65536;
     bool start = false;
 
     s_ksargv_elems argv_elems[] = 

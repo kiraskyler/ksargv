@@ -43,6 +43,17 @@ thanks you, i will keep that
 [kira@kira-virtual-machine ksargv]$ 
 ```
 
+```
+[niuwanli@swcentos7 ksargv]$ ./template_vals --host 192.168.1.1 -s
+	ksargv.c,	argc_get_options,134 >> new options: --host
+	ksargv.c,	argc_get_options,153 >> new values: --host:192.168.1.1
+	ksargv.c,	argc_get_options,134 >> new options: -s
+erro
+host = unknown
+port = 65536
+start = 1
+```
+
 ## 维护说明
 
 ## 注意
